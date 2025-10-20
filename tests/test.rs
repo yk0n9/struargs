@@ -6,11 +6,14 @@ fn test() {
     struct StructArg {
         size: Option<i32>,
         name: Option<String>,
+        #[args(rename = "type")]
+        ty: Option<String>,
     }
 
     let s = StructArg {
         size: Some(1),
         name: Some("123".to_string()),
+        ty: Some("Arg".to_string()),
     };
 
     assert_eq!(
@@ -19,7 +22,9 @@ fn test() {
             "--size".to_string(),
             1.to_string(),
             "--name".to_string(),
-            123.to_string()
+            123.to_string(),
+            "--type".to_string(),
+            "Arg".to_string(),
         ]
     );
 }

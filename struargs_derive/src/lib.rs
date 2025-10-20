@@ -1,8 +1,8 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, Type};
+use syn::{Data, DeriveInput, Expr, Lit, Meta, Type};
 
-#[proc_macro_derive(Args)]
+#[proc_macro_derive(Args, attributes(args))]
 pub fn struargs(input: TokenStream) -> TokenStream {
     common(input)
 }
@@ -35,7 +35,21 @@ fn common(input: TokenStream) -> TokenStream {
             continue;
         };
 
-        let ident_arg = format!("--{}", ident.to_string());
+        let mut ident_arg = format!("--{}", ident.to_string());
+
+        for attr in field.attrs.iter() {
+            if attr.path().is_ident("args") {
+                if let Ok(Meta::NameValue(ref nv)) = attr.parse_args() {
+                    if nv.path.is_ident("rename") {
+                        if let Expr::Lit(ref lit) = nv.value {
+                            if let Lit::Str(ref s) = lit.lit {
+                                ident_arg = format!("--{}", s.value());
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         option_args.push(quote! {
             if let Some(ref arg) = self.#ident {
