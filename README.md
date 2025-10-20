@@ -56,3 +56,6 @@ impl ::struargs::Args for StructArg {
     }
 }
 ```
+### Args
+
+- rename (custom)
