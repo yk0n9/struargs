@@ -1,0 +1,7 @@
+[package]
+name = "struargs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+struargs_derive = { path = "struargs_derive", version = "0.1.0" }
