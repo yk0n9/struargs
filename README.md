@@ -3,6 +3,7 @@
 A macro that builds a structure into a Command parameter list
 
 ## Example
+
 ```rust
 use struargs::Args;
 
@@ -34,11 +35,16 @@ assert_eq!(
     ]
 );
 ```
+
 it expand to (all field must impl Display)
+
 ```rust
 impl ::struargs::Args for StructArg {
     fn args(&self) -> Vec<String> {
         let mut args = ::alloc::vec::Vec::new();
+        if let Some(ref arg) = self.size {
+            args.extend(["--size".to_string(), arg.to_string()]);
+        }
         if let Some(ref arg) = self.name {
             args.extend(["--name".to_string(), arg.to_string()]);
         }
