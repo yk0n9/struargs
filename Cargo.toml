@@ -1,6 +1,6 @@
 [package]
 name = "struargs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 
 authors = ["Ykong <yk0n9@outlook.com>"]
@@ -15,4 +15,4 @@ repository = "https://github.com/yk0n9/struargs"
 readme = "README.md"
 
 [dependencies]
-struargs_derive = { path = "struargs_derive", version = "0.1.0" }
+struargs_derive = { path = "struargs_derive", version = "0.1.1" }
