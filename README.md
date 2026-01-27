@@ -64,3 +64,4 @@ impl ::struargs::Args for StructArg {
 
 - rename (custom)
 - no_value
+- short (custom)
