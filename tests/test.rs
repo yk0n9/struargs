@@ -11,17 +11,20 @@ fn test() {
         #[args(no_value)]
         one: Option<()>,
         num: f32,
+        #[args(short = "e")]
+        enable: bool,
     }
 
     let s = StructArg {
         size: None,
-        name: Some("123".to_string()),
+        name: Some("Ykong".to_string()),
         ty: Some("Arg".to_string()),
         one: Some(()),
         num: 100.1,
+        enable: true,
     };
 
     let args = s.args().join(" ");
 
-    assert_eq!(args, "--name 123 --type Arg --one --num 100.1");
+    assert_eq!(args, "--name Ykong --type Arg --one --num 100.1 -e true");
 }

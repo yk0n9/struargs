@@ -35,6 +35,9 @@ fn common(input: TokenStream) -> TokenStream {
                         ident_arg = format!("--{}", value.value());
                     } else if meta.path.is_ident("no_value") {
                         no_value = true;
+                    } else if meta.path.is_ident("short") {
+                        let value = meta.value()?.parse::<syn::LitStr>()?;
+                        ident_arg = format!("-{}", value.value());
                     }
                     Ok(())
                 })
