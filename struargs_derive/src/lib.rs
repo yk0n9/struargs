@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, Expr, Lit, Meta, Type};
+use syn::{Data, DeriveInput, Type};
 
 #[proc_macro_derive(Args, attributes(args))]
 pub fn struargs(input: TokenStream) -> TokenStream {
@@ -25,27 +25,37 @@ fn common(input: TokenStream) -> TokenStream {
         };
 
         let mut ident_arg = format!("--{}", ident.to_string());
+        let mut no_value = false;
 
         for attr in field.attrs.iter() {
             if attr.path().is_ident("args") {
-                if let Ok(Meta::NameValue(ref nv)) = attr.parse_args() {
-                    if nv.path.is_ident("rename") {
-                        if let Expr::Lit(ref lit) = nv.value {
-                            if let Lit::Str(ref s) = lit.lit {
-                                ident_arg = format!("--{}", s.value());
-                            }
-                        }
+                attr.parse_nested_meta(|meta| {
+                    if meta.path.is_ident("rename") {
+                        let value = meta.value()?.parse::<syn::LitStr>()?;
+                        ident_arg = format!("--{}", value.value());
+                    } else if meta.path.is_ident("no_value") {
+                        no_value = true;
                     }
-                }
+                    Ok(())
+                })
+                .unwrap();
             }
         }
 
         if is_option(&field.ty) {
-            rets.push(quote! {
-                if let Some(ref arg) = self.#ident {
-                    args.extend([#ident_arg.to_string(), arg.to_string()]);
-                }
-            });
+            if no_value {
+                rets.push(quote! {
+                    if let Some(_) = self.#ident {
+                        args.extend([#ident_arg.to_string()]);
+                    }
+                });
+            } else {
+                rets.push(quote! {
+                    if let Some(ref value) = self.#ident {
+                        args.extend([#ident_arg.to_string(), value.to_string()]);
+                    }
+                });
+            }
         } else {
             rets.push(quote! {
                 args.extend([#ident_arg.to_string(), self.#ident.to_string()]);
@@ -57,7 +67,7 @@ fn common(input: TokenStream) -> TokenStream {
 
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
-    quote! {
+    let expend = quote! {
         impl #impl_generics ::struargs::Args for #ident #ty_generics #where_clause {
             fn args(&self) -> Vec<String> {
                 let mut args = vec![];
@@ -65,8 +75,9 @@ fn common(input: TokenStream) -> TokenStream {
                 args
             }
         }
-    }
-    .into()
+    };
+
+    expend.into()
 }
 
 fn is_option(ty: &Type) -> bool {
