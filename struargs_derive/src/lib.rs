@@ -19,12 +19,14 @@ fn common(input: TokenStream) -> TokenStream {
     };
 
     let mut rets = vec![];
+    let mut env_rets = vec![];
     for field in stru.fields.iter() {
         let Some(ref ident) = field.ident else {
             continue;
         };
 
         let mut ident_arg = format!("--{}", ident.to_string());
+        let mut env_ident_arg = ident.to_string().to_uppercase();
         let mut no_value = false;
 
         for attr in field.attrs.iter() {
@@ -33,6 +35,7 @@ fn common(input: TokenStream) -> TokenStream {
                     if meta.path.is_ident("rename") {
                         let value = meta.value()?.parse::<syn::LitStr>()?;
                         ident_arg = format!("--{}", value.value());
+                        env_ident_arg = value.value().to_uppercase();
                     } else if meta.path.is_ident("no_value") {
                         no_value = true;
                     } else if meta.path.is_ident("short") {
@@ -48,7 +51,7 @@ fn common(input: TokenStream) -> TokenStream {
         if is_option(&field.ty) {
             if no_value {
                 rets.push(quote! {
-                    if let Some(_) = self.#ident {
+                    if self.#ident.is_some() {
                         args.extend([#ident_arg.to_string()]);
                     }
                 });
@@ -58,10 +61,18 @@ fn common(input: TokenStream) -> TokenStream {
                         args.extend([#ident_arg.to_string(), value.to_string()]);
                     }
                 });
+                env_rets.push(quote! {
+                    if let Some(ref value) = self.#ident {
+                        env_vars.insert(#env_ident_arg.to_string(), value.to_string());
+                    }
+                });
             }
         } else {
             rets.push(quote! {
                 args.extend([#ident_arg.to_string(), self.#ident.to_string()]);
+            });
+            env_rets.push(quote! {
+                env_vars.insert(#env_ident_arg.to_string(), self.#ident.to_string());
             });
         }
     }
@@ -76,6 +87,12 @@ fn common(input: TokenStream) -> TokenStream {
                 let mut args = vec![];
                 #(#rets)*
                 args
+            }
+
+            fn env_args(&self) -> ::std::collections::HashMap<String, String> {
+                let mut env_vars = ::std::collections::HashMap::new();
+                #(#env_rets)*
+                env_vars
             }
         }
     };

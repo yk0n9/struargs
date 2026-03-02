@@ -1,5 +1,7 @@
+pub use struargs_derive::Args;
+
 pub trait Args {
     fn args(&self) -> Vec<String>;
-}
 
-pub use struargs_derive::Args;
+    fn env_args(&self) -> std::collections::HashMap<String, String>;
+}
